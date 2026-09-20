@@ -1,0 +1,314 @@
+// SQLite in dev; switch `provider` to "postgresql" + a Postgres DATABASE_URL for production.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String?
+  role         String   @default("STUDENT") // STUDENT | ADMIN
+  headline     String? // short public tagline (portfolio)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile          StudentProfile?
+  submissions      ChallengeSubmission[] @relation("ChallengeSubmissions")
+  progress         LessonProgress[]
+  enrollments      RoadmapEnrollment[]
+  attendance       ClassAttendance[]
+  certificates     Certificate[]
+  projects         Project[]
+  notifications    Notification[]
+  chatMessages     ClassChat[]
+  requests         SupportRequest[]
+  gradedSubmissions ChallengeSubmission[] @relation("GradedSubmissions") // as reviewer
+  xpLogs         XpLog[]
+  forumTopics      ForumTopic[]
+  forumComments    ForumComment[]
+
+  @@map("user")
+}
+
+model StudentProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grade      String?
+  school     String?
+  city       String?
+  bio        String?
+  avatarHue  Int      @default(28) // pick a colour from the palette deterministically
+  xp         Int      @default(0)
+  level      Int      @default(1)
+  streak     Int      @default(0)
+  lastActive DateTime @default(now())
+  skills     String   @default("[]") // JSON array of earned skill/badge slugs
+  badges     String   @default("[]") // JSON array of earned badge slugs
+  skillsTree  String   @default("{}") // JSON map of skillSlug -> progress 0..100
+
+  @@map("student_profile")
+}
+
+// --- Learning content (Phase 2) 
+
+model Roadmap {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  pillar      String // subjects | innovation
+  title       String
+  tagline     String
+  grade       String? // e.g. "6–10"
+  color       String   @default("#166534")
+  xpTotal     Int      @default(0) // sum of lesson XP (cached)
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  modules    Module[]
+  enrollments RoadmapEnrollment[]
+  classes    LiveClass[]
+}
+
+model Module {
+  id            String  @id @default(cuid())
+  roadmapId     String
+  roadmap       Roadmap @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  order         Int     @default(0)
+
+  lessons Lesson[]
+}
+
+model Lesson {
+  id        String  @id @default(cuid())
+  moduleId  String
+  module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  roadmapId String
+  title     String
+  summary   String
+  kind      String  @default("READING") // READING | VIDEO | QUIZ | CODING
+  videoUrl  String? // YouTube / Jitsi rec link
+  content   String  @default("") // markdown-ish body; quiz lives in quiz
+  quiz      String? // JSON: [{ prompt, options[], answer }]  |  null => no quiz
+  starter   String? // starter code / prompt scaffold for CODING lessons
+  xp        Int     @default(10)
+  order     Int     @default(0)
+  createdAt DateTime @default(now())
+
+  progress LessonProgress[]
+}
+
+model LessonProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  quizScore Int?     // % if a quiz was taken
+  completed Boolean  @default(false)
+  xpTaken   Int      @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+}
+
+model RoadmapEnrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmapId String
+  roadmap   Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  progressPct Int     @default(0) // cached 0..100
+  certified  Boolean @default(false)
+  enrolledAt DateTime @default(now())
+
+  @@unique([userId, roadmapId])
+}
+
+// --- Live classes (Phase 3) 
+
+model LiveClass {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  roadmapId   String?
+  roadmap     Roadmap? @relation(fields: [roadmapId], references: [id], onDelete: SetNull)
+  hostId      String?
+  hostName    String   @default("Tuiton Tutor")
+  startsAt    DateTime
+  durationMin Int      @default(60)
+  roomName    String   @unique // used to build the Jitsi meet URL + recording slug
+  status      String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
+  createdAt   DateTime @default(now())
+
+  attendance ClassAttendance[]
+  chat       ClassChat[]
+}
+
+model ClassAttendance {
+  id        String   @id @default(cuid())
+  classId   String
+  class     LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime  @default(now())
+
+  @@unique([classId, userId])
+}
+
+model ClassChat {
+  id        String   @id @default(cuid())
+  classId   String
+  class     LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  kind      String   @default("CHAT") // CHAT | QUESTION | POLL | ANNOUNcement
+  createdAt DateTime @default(now())
+}
+
+// --- Challenges & gamification (Phase 4) 
+
+model Challenge {
+  id          String   @id @default(cuid())
+  kind        String   @default("QUIZ") // QUIZ | CODING | PROMPT_AI | PRACTICE | BADGE_TASK
+  title       String
+  prompt      String
+  cadence     String   @default("DAILY") // DAILY | WEEKLY | MONTHLY
+  difficulty  String   @default("BEGINNER") // BEGINNER | INTERMEDIATE | ADVANCED
+  strand      String? // subject/roadmap tag e.g. "maths", "ai-agents"
+  options     String? // JSON for QUIZ kind: [{ prompt, options[], answer }]
+  answer      String? // expected answer / rubric hint (auto-check for QUIZ)
+  starter     String? // code scaffold for CODING
+  xp          Int      @default(10)
+  dayKey      Int? // DAILY: yyyymmdd so exactly one per day
+  weekKey     Int? // WEEKLY: e.g. 2026W33
+  monthKey    String? // MONTHLY: e.g. "2026-08"
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdBy   String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  submissions ChallengeSubmission[]
+}
+
+model ChallengeSubmission {
+  id          String   @id @default(cuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("ChallengeSubmissions", fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  score       Int?      // 0..100
+  autoPassed  Boolean?
+  status      String    @default("SUBMITTED") // SUBMITTED | APPROVED | REJECTED
+  feedback    String?
+  xpAwarded   Int       @default(0)
+  reviewedById String? 
+  reviewedBy   User?     @relation("GradedSubmissions", fields: [reviewedById], references: [id], onDelete: SetNull)
+  gradedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([challengeId, userId])
+}
+
+model XpLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  itemId    String? // lesson / challenge / submission id
+  createdAt DateTime @default(now())
+}
+
+// --- Badges & certificates (Phase 4/5) 
+
+model Badge {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  icon        String   @default("🏆")
+  description String
+  xpBonus     Int      @default(0)
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug        String
+  title       String
+  issuer      String   @default("Tuiton Academy")
+  issuedAt    DateTime @default(now())
+
+  @@unique([userId, slug])
+}
+
+// --- Portfolio (Phase 5) 
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String
+  type        String   @default("ai-agent") // ai-agent | coding | science | art | presentation
+  link        String?
+  pinned      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+// --- Community & support (Phase 5) 
+
+model ForumTopic {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  tag       String      @default("general")
+  createdAt DateTime    @default(now())
+
+  comments ForumComment[]
+}
+
+model ForumComment {
+  id        String   @id @default(cuid())
+  topicId   String
+  topic     ForumTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  href      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SupportRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("OPEN") // OPEN | DONE
+  category  String   @default("general")
+  message   String
+  createdAt DateTime @default(now())
+}

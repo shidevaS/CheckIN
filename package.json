@@ -1,0 +1,28 @@
+{
+  "name": "tuiton",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tuiton — tuition meets the AI studio. Live classes + integrated content + challenges.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "start": "npm run start --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:generate": "npm run db:generate --workspace @tuiton/db",
+    "db:push": "npm run db:push --workspace @tuiton/db",
+    "db:seed": "npm run db:seed --workspace @tuiton/db",
+    "db:studio": "npm run db:studio --workspace @tuiton/db",
+    "mobile:start": "npm start --workspace apps/mobile"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

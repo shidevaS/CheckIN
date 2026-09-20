@@ -1,0 +1,277 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Scientific paper warm-cool neutral, gold merit accent, teal secondary. */
+:root {
+  --background: 244 246 249;
+  --foreground: 26 30 39;
+  --card: 255 255 255;
+  --card-foreground: 26 30 39;
+  --muted: 237 241 246;
+  --muted-foreground: 90 99 115;
+  --secondary: 237 241 246;
+  --secondary-foreground: 26 30 39;
+  --border: 219 225 234;
+  --input: 198 207 219;
+  --ring: 178 122 11;
+  --primary: 178 122 11; /* gold/saffron */
+  --primary-foreground: 40 28 6;
+  --accent: 42 111 114; /* teal */
+  --accent-foreground: 255 255 255;
+  --destructive: 194 57 28;
+  --destructive-foreground: 255 255 255;
+}
+
+.dark {
+  --background: 19 22 30;
+  --foreground: 233 237 243;
+  --card: 27 31 41;
+  --card-foreground: 233 237 243;
+  --muted: 35 40 52;
+  --muted-foreground: 153 162 176;
+  --secondary: 35 40 52;
+  --secondary-foreground: 233 237 243;
+  --border: 43 50 64;
+  --input: 58 66 82;
+  --ring: 240 182 73;
+  --primary: 240 182 73;
+  --primary-foreground: 19 22 30;
+  --accent: 87 192 191;
+  --accent-foreground: 19 22 30;
+  --destructive: 239 106 71;
+  --destructive-foreground: 19 22 30;
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--border));
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: theme("fontFamily.sans");
+  }
+  ::selection {
+    background: rgb(var(--ring) / 0.22);
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--ring));
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* PWA Install Animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Mobile responsive utilities */
+@layer utilities {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Improved touch targets for mobile */
+@media (max-width: 640px) {
+  button, [role="button"], a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Better scrollbar styling for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted-foreground));
+}
+
+/* Print styles */
+@media print {
+  nav, header, footer, .fixed, .sticky {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Landing page specific styles */
+.landing-hero {
+  background: linear-gradient(135deg, rgb(var(--background)) 0%, rgb(var(--muted)) 50%, rgb(var(--secondary)) 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, rgb(var(--primary)) 0%, #f59e0b 50%, rgb(var(--primary)) 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.gradient-teal {
+  background: linear-gradient(135deg, rgb(var(--accent)) 0%, #0d9488 50%, rgb(var(--accent)) 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Feature cards hover effect */
+.feature-card {
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgb(var(--muted-foreground) / 0.15);
+}
+
+/* Navigation mobile styles */
+.mobile-nav-open {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Badge pulse animation for new items */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--primary) / 0.6); }
+  50% { box-shadow: 0 0 0 8px rgb(var(--primary) / 0); }
+}
+
+.badge-new {
+  animation: pulse-gold 2s infinite;
+}
+
+/* Code editor styling for coding challenges */
+.code-editor {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  tab-size: 2;
+}
+
+/* Live class video container aspect ratio */
+.video-container {
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+/* Challenge card grid */
+.challenge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .challenge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Roadmap progress ring */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+/* Table responsive */
+.table-responsive {
+  @apply overflow-x-auto;
+}
+
+.table-responsive table {
+  @apply min-w-full;
+}
+
+/* Skeleton loading */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.skeleton {
+  @apply bg-muted animate-pulse;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+/* Empty state */
+.empty-state {
+  @apply flex flex-col items-center justify-center py-12 px-4 text-center;
+}
+
+.empty-state-icon {
+  @apply text-6xl mb-4 opacity-50;
+}
+
+.empty-state-title {
+  @apply text-lg font-semibold mb-2;
+}
+
+.empty-state-description {
+  @apply text-muted-foreground mb-4 max-w-sm;
+}

@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Tuiton",
+    "slug": "tuiton",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#0F1729"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tuiton.app"
+    },
+    "android": {
+      "package": "com.tuiton.app"
+    },
+    "scheme": "tuiton"
+  }
+}

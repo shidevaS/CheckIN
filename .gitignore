@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# builds
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# env
+.env
+.env.local
+.env.*.local
+apps/*/.env
+apps/*/.env.local
+packages/*/.env
+
+# logs
+*.log
+npm-debug.log*
+
+# db (dev sqlite)
+*.db
+*.db-journal
+packages/db/prisma/dev.db
+packages/db/prisma/dev.db-journal
+
+# expo / mobile
+.expo/
+.expo-shared/
+apps/mobile/*.jks
+apps/mobile/google-services.json
+apps/mobile/GoogleService-Info.plist
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# misc
+coverage/
+.turbo/
+.cache/

@@ -1,0 +1,424 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuiton — Build Roadmap</title>
+<style>
+  /* ---------- Tokens: light (default) ---------- */
+  :root{
+    --bg:#F4F6F9;            /* cool paper ground */
+    --surface:#FFFFFF;
+    --surface-2:#EDF1F6;
+    --ink:#1A1E27;           /* dark ink text */
+    --ink-2:#5A6373;         /* muted text */
+    --ink-3:#8590A0;
+    --line:#DBE1EA;
+    --line-2:#C6CFDB;
+    --gold:#B27A0B;          /* merit/saffron accent */
+    --gold-2:#8F5F08;
+    --gold-soft:#FBEDC9;
+    --teal:#2A6F72;
+    --teal-soft:#D7EBEB;
+    --good:#2E7D5B;
+    --warn:#C77708;
+    --live:#C2391C;
+    --serif:"Iowan Old Style","Palatino Linotype","Palatino","Book Antiqua",Georgia,serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:"SFMono-Regular","JetBrains Mono","Cascadia Code","Consolas","Liberation Mono",monospace;
+    --measure:70ch;
+  }
+  /* ---------- Tokens: dark (OS) ---------- */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#13161E;
+      --surface:#1B1F29;
+      --surface-2:#232834;
+      --ink:#E9EDF3;
+      --ink-2:#99A2B0;
+      --ink-3:#6C7585;
+      --line:#2B3240;
+      --line-2:#3A4252;
+      --gold:#F0B649;
+      --gold-2:#F6C968;
+      --gold-soft:#33280E;
+      --teal:#57C0BF;
+      --teal-soft:#15302F;
+      --good:#57C99A;
+      --warn:#F0A93B;
+      --live:#EF6A47;
+    }
+  }
+  /* ---------- Tokens: dark (explicit toggle) ---------- */
+  :root[data-theme="dark"]{
+    --bg:#13161E; --surface:#1B1F29; --surface-2:#232834;
+    --ink:#E9EDF3; --ink-2:#99A2B0; --ink-3:#6C7585;
+    --line:#2B3240; --line-2:#3A4252;
+    --gold:#F0B649; --gold-2:#F6C968; --gold-soft:#33280E;
+    --teal:#57C0BF; --teal-soft:#15302F;
+    --good:#57C99A; --warn:#F0A93B; --live:#EF6A47;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--sans); font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+
+  /* ---------- Layout ---------- */
+  .shell{max-width:1080px; margin:0 auto; padding:0 28px 96px; display:grid;
+    grid-template-columns:minmax(0,1fr); gap:0;}
+  @media(min-width:980px){
+    .shell{grid-template-columns:188px minmax(0,1fr); gap:56px; padding-top:56px;}
+  }
+
+  .nav{position:sticky; top:28px; align-self:start; padding:0 0 32px; font-size:13.5px;}
+  @media(max-width:979px){ .nav{position:relative; top:auto; padding:24px 0 0;} }
+  .nav .brand{font-family:var(--serif); font-size:21px; letter-spacing:-.01em; color:var(--ink); margin:0 0 18px;}
+  .nav .brand .dot{color:var(--gold);}
+  .nav a{display:block; padding:5px 0; color:var(--ink-2); text-decoration:none; border-left:2px solid transparent; padding-left:10px; margin-left:-12px; transition:color .15s,border-color .15s;}
+  .nav a:hover{color:var(--ink)}
+  .nav a.sel{color:var(--ink); border-color:var(--gold); font-weight:600;}
+  .nav .navsub{letter-spacing:.14em; text-transform:uppercase; font-size:10.5px; color:var(--ink-3); margin:18px 0 6px;}
+
+  .content{min-width:0;}
+
+  /* ---------- Type ---------- */
+  h1,h2,h3,h4{font-family:var(--serif); font-weight:600; letter-spacing:-.012em; text-wrap:balance; color:var(--ink);}
+  h1{font-size:clamp(36px,6vw,58px); line-height:1.04; margin:0 0 14px;}
+  h2{font-size:clamp(25px,3.4vw,33px); line-height:1.12; margin:62px 0 6px;}
+  h3{font-size:18.5px; line-height:1.3; margin:0 0 4px; font-weight:600;}
+  p{margin:0 0 16px; max-width:var(--measure);}
+  .lead{font-size:19.5px; line-height:1.55; color:var(--ink); max-width:62ch;}
+  a.lnk{color:var(--teal); text-decoration:underline; text-underline-offset:3px;}
+
+  .eyebrow{display:inline-block; font-family:var(--mono); font-size:11.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--gold-2); margin:0 0 18px;}
+  .sub{font-family:var(--sans); font-weight:400; font-size:clamp(17px,2.1vw,20px); color:var(--ink-2); letter-spacing:0; max-width:60ch; margin:0 0 4px;}
+
+  section{padding:4px 0 0; scroll-margin-top:24px;}
+
+  .rule{border:0; border-top:1px solid var(--line); margin:44px 0;}
+  .rule.gold{border-top:1.5px solid var(--gold); width:48px; margin:0 0 18px;}
+
+  /* ---------- Glance poster ---------- */
+  .glance{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; background:var(--line);
+    border:1px solid var(--line); border-radius:12px; overflow:hidden; margin:30px 0 8px;}
+  @media(min-width:640px){ .glance{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  .gl{background:var(--surface); padding:16px 18px;}
+  .gl .k{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 6px;}
+  .gl .v{font-family:var(--serif); font-size:16px; color:var(--ink); line-height:1.25; margin:0;}
+  .gl .v b{font-weight:600;}
+
+  /* ---------- Feature grid ---------- */
+  .grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:24px;}
+  @media(min-width:720px){ .grid{grid-template-columns:1fr 1fr;} }
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 20px 20px;}
+  .card h3{margin:0 0 4px;}
+  .card p{font-size:14.5px; color:var(--ink-2); margin:0; line-height:1.5;}
+  .card .ic{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--gold-2); margin:0 0 10px; display:block;}
+
+  /* ---------- Phases ---------- */
+  .rail{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin:22px 0 38px;}
+  .rail .s{background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px 14px;}
+  .rail .n{font-family:var(--mono); font-size:11px; color:var(--gold-2); letter-spacing:.1em;}
+  .rail .t{font-family:var(--serif); font-size:14px; margin-top:2px;}
+
+  .phase{border-top:1px solid var(--line); padding:30px 0; display:grid; grid-template-columns:64px minmax(0,1fr); gap:8px 22px;}
+  .phase:first-of-type{border-top:none; padding-top:6px;}
+  .phase .num{font-family:var(--mono); font-size:13px; font-weight:600; color:var(--gold); letter-spacing:.04em; line-height:1.1;}
+  .phase .num small{display:block; font-size:10px; font-weight:400; color:var(--ink-3); letter-spacing:.12em; margin-top:4px; text-transform:uppercase;}
+  .phase h3{font-size:22px; margin:0 0 2px;}
+  .phase .goal{color:var(--ink-2); font-size:15.5px; margin:0 0 14px; max-width:64ch;}
+  .phase ul{margin:0 0 4px; padding:0; list-style:none;}
+  .phase li{position:relative; padding:5px 0 5px 20px; color:var(--ink); font-size:15px; line-height:1.5;}
+  .phase li::before{content:""; position:absolute; left:2px; top:13px; width:6px; height:6px; border-radius:50%; background:var(--gold);}
+  .exit{display:flex; gap:10px; align-items:flex-start; margin-top:14px; padding:12px 14px; background:var(--surface-2); border-left:2px solid var(--teal); border-radius:0 8px 8px 0;}
+  .exit .lab{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--teal); white-space:nowrap; padding-top:2px;}
+  .exit .tx{font-size:14.5px; color:var(--ink); margin:0; line-height:1.5;}
+
+  /* ---------- Roles ---------- */
+  .roles{display:grid; grid-template-columns:1fr; gap:14px; margin-top:22px;}
+  @media(min-width:620px){ .roles{grid-template-columns:1fr 1fr;} }
+  .role{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:18px 20px;}
+  .role .nm{font-family:var(--serif); font-size:17px; margin:0 0 2px;}
+  .role .tg{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--gold-2); margin:0 0 12px; display:block;}
+  .role ul{margin:0; padding:0; list-style:none;}
+  .role li{font-size:14px; color:var(--ink-2); padding:3px 0 3px 16px; position:relative;}
+  .role li::before{content:"–"; position:absolute; left:0; color:var(--ink-3);}
+
+  /* ---------- Stack ---------- */
+  .stack{margin-top:18px;}
+  .stack .row{display:grid; grid-template-columns:130px 1fr; gap:12px 24px; padding:13px 0; border-bottom:1px solid var(--line); align-items:baseline;}
+  .stack .row:first-child{padding-top:6px;}
+  .stack .lab{font-family:var(--mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3);}
+  .stack .val{font-size:15px; color:var(--ink); line-height:1.5;}
+  .stack .val .muted{color:var(--ink-2);}
+  @media(max-width:560px){ .stack .row{grid-template-columns:1fr; gap:2px;} }
+
+  /* ---------- Pills ---------- */
+  .pill{display:inline-block; font-family:var(--mono); font-size:11px; letter-spacing:.04em; padding:2px 8px; border-radius:999px; vertical-align:1px;}
+  .pill.live{background:#FBE7E1; color:var(--live);} /* light */
+  :root:not([data-theme="light"]) .pill.live{background:#3a1f15; color:var(--live);}
+  .pill.sched{background:var(--teal-soft); color:var(--teal);}
+
+  /* ---------- Footer note ---------- */
+  .note{font-size:13.5px; color:var(--ink-3); margin-top:48px; padding-top:18px; border-top:1px solid var(--line); max-width:var(--measure);}
+  .note code{font-family:var(--mono); font-size:12px; background:var(--surface-2); padding:1px 5px; border-radius:4px; color:var(--ink-2);}
+
+  .nums{font-variant-numeric:tabular-nums;}
+
+  @media(prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px; border-radius:3px;}
+</style>
+
+<div class="shell">
+  <nav class="nav" aria-label="Contents">
+    <p class="brand">Tuiton<span class="dot">.</span></p>
+    <a href="#glance">At a glance</a>
+    <a href="#concept">The idea</a>
+    <a href="#features">Feature modules</a>
+    <a href="#phases">Build phases</a>
+    <a href="#roles">Admins & hosts</a>
+    <a href="#stack">Tech stack</a>
+    <a href="#launch">Launch notes</a>
+    <p class="navsub">Status</p>
+    <a href="#" class="sel">Roadmap v1</a>
+  </nav>
+
+  <main class="content">
+
+    <header>
+      <p class="eyebrow">Build Roadmap · v1 · Aug 2026</p>
+      <h1>Tuition meets the&nbsp;AI studio.</h1>
+      <p class="sub">A learning platform that blends school-subject tuition with an AI&nbsp;&&nbsp;innovation track — live classes plus a pre-integrated content library — and grows students through daily, weekly and monthly challenges.</p>
+    </header>
+
+    <!-- GLANCE -->
+    <section id="glance" class="glance">
+      <div class="gl"><p class="k">Platform</p><p class="v"><b>Web + Mobile</b><br>Next.js · React&nbsp;Native (Expo)</p></div>
+      <div class="gl"><p class="k">Live video</p><p class="v"><b>Jitsi</b> · self-hosted<br>JWT-secured rooms</p></div>
+      <div class="gl"><p class="k">First scale</p><p class="v"><b>One batch</b><br>admins host it all</p></div>
+      <div class="gl"><p class="k">Admins / Hosts</p><p class="v">Shivani<br>Devendra</p></div>
+      <div class="gl"><p class="k">Data</p><p class="v">PostgreSQL · Redis<br>S3 storage</p></div>
+      <div class="gl"><p class="k">Delivery</p><p class="v">Docker · VPS<br>Cloudflare CDN</p></div>
+    </section>
+
+    <!-- CONCEPT -->
+    <section id="concept">
+      <hr class="rule gold">
+      <h2>The idea, in one breath</h2>
+      <p class="lead">School subjects taught well <em>and</em> a real innovation track — coding, prompt&nbsp;engineering, AI&nbsp;tools, app-building, security basics — served as both live interactive classes (hosted by Shivani & Devendra) and on-demand integrated content. Growth is measured not just by marks but by a living profile: challenges done, skills earned, a portfolio that proves what you can build.</p>
+
+      <div class="grid">
+        <div class="card"><span class="ic">PILLAR · 01</span><h3>Two pillars, one roof</h3><p>A <b>Subjects</b> pillar (grades 6–12, boards) and an <b>Innovation</b> pillar (coding → DSA, prompt&nbsp;engg, AI tools, ML, app-building, cyber basics) share the same student, the same XP, the same profile.</p></div>
+        <div class="card"><span class="ic">PILLAR · 02</span><h3>Live & on-demand, blended</h3><p>Every topic exists twice: as a live class on the calendar <span class="pill sched">scheduled</span> and as integrated material in the library. Miss the live class — the recording lands back in the roadmap, in context, the same night.</p></div>
+        <div class="card"><span class="ic">PILLAR · 03</span><h3>Challenges build the habit</h3><p>A compact daily task keeps the streak alive; a weekly challenge earns a badge; a monthly capstone gets featured. XP, levels and a visible skill tree make progress something students want, not something they're told to want.</p></div>
+        <div class="card"><span class="ic">PILLAR · 04</span><h3>A profile that earns its keep</h3><p>Not a vanity page. A shareable portfolio of projects & prompts, a skill tree, a progress dashboard, and certificates you unlock only by doing the work. The leaderboard rewards the people who actually levelled up.</p></div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <hr class="rule gold">
+      <h2>Feature modules</h2>
+      <p>Twelve modules make the whole product. Phase&nbsp;1 ships identity & shell; Phase&nbsp;6 ships parity & a real launch batch. In between, every module below is built to completion, not to a demo.</p>
+      <div class="grid">
+        <div class="card"><h3>01 · Auth & roles</h3><p>Student vs Admin/Host. Email OTP + Google. Seeded admins: Shivani, Devendra. Role-gated routes from day one.</p></div>
+        <div class="card"><h3>02 · Home / dashboard</h3><p>Today's class, today's challenge, streak & XP up top, continue-learning and "what's next." The screen students open daily.</p></div>
+        <div class="card"><h3>03 · Roadmaps & content</h3><p>Subject roadmaps per grade + Innovation roadmaps. Modules → lessons → resources (video, notes, quizzes, curated links). Admins author; students complete; progress tracks.</p></div>
+        <div class="card"><h3>04 · Live classes <span class="pill live">LIVE</span></h3><p>Jitsi embedded in-app, JWT-secured rooms. Calendar, "join live", auto-attendance from participant events, live chat/Q&A, polls. Recording auto-archives into the library.</p></div>
+        <div class="card"><h3>05 · Challenge engine</h3><p>Daily (quiz / problem / prompt), weekly (submission + admin review), monthly (capstone, leaderboard, featured). XP, streaks, badges, skill points toward the skill tree.</p></div>
+        <div class="card"><h3>06 · Profile & portfolio</h3><p>Public showcase (pinned projects, prompts, write-ups), skill tree, progress charts, certificates, rank. The artifact a student carries out of a year here.</p></div>
+        <div class="card"><h3>07 · Leaderboard & forum</h3><p>Weekly / monthly / all-time boards, batch cochorts. Per-topic discussion & peer Q&A — answers can themselves earn small XP.</p></div>
+        <div class="card"><h3>08 · Certificates</h3><p>Auto-issued on module / roadmap / challenge completion. Verifiable via a shareable link — the sort a parent or employer can trust.</p></div>
+        <div class="card"><h3>09 · Notifications</h3><p>Class reminders, challenge deadlines, results, announcements. In-app + email now; FCM push on mobile in Phase&nbsp;6.</p></div>
+        <div class="card"><h3>10 · Admin console</h3><p>Shivani & Devendra's cockpit: schedule & host live classes, author content, set & grade challenges, manage batches, read engagement analytics.</p></div>
+        <div class="card"><h3>11 · Mobile companion</h3><p>React Native (Expo), same API. Offline content downloads, push, attend live from a phone. Shares logic with web via a shared TS client.</p></div>
+        <div class="card"><h3>12 · Payments & tier <span class="pill sched">later</span></h3><p>Razorpay for paid tracks/tiers, once a free batch is actually learning. Optional — the product works fully free-first.</p></div>
+      </div>
+    </section>
+
+    <!-- PHASES -->
+    <section id="phases">
+      <hr class="rule gold">
+      <h2>The build, in six phases</h2>
+      <p>Order is load-bearing: each phase's exit is the next phase's prerequisite. Start small — one batch, two admins — and let the product prove itself before payments and scale work.</p>
+      <div class="rail nums">
+        <div class="s"><div class="n">P1</div><div class="t">Foundation & access</div></div>
+        <div class="s"><div class="n">P2</div><div class="t">Roadmaps & content</div></div>
+        <div class="s"><div class="n">P3</div><div class="t">Live classes</div></div>
+        <div class="s"><div class="n">P4</div><div class="t">Challenges & XP</div></div>
+        <div class="s"><div class="n">P5</div><div class="t">Profile & portfolio</div></div>
+        <div class="s"><div class="n">P6</div><div class="t">Polish, mobile, launch</div></div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P1<small>.Foundation</small></div>
+        <div>
+          <h3>Foundation & access</h3>
+          <p class="goal">Monorepo, deploy pipeline, auth, roles and a real brand shell — so the whole product has a skeleton to grow on.</p>
+          <ul>
+            <li>Monorepo: <code style="font-family:var(--mono);font-size:13px">web</code> (Next.js App Router, TS, Tailwind, shadcn) + <code style="font-family:var(--mono);font-size:13px">mobile</code> (Expo) + <code style="font-family:var(--mono);font-size:13px">shared</code> TS client & types.</li>
+            <li>Postgres + Prisma schema, Redis, S3-compatible storage, env & Docker.</li>
+            <li>Email-OTP + Google auth; Student / Admin roles; seeded admins Shivani & Devendra.</li>
+            <li>Design system: the palette & type, base components, role-gated layouts.</li>
+            <li>Landing page: brand, the two pillars, "join a live class" CTA. Deployed to a URL.</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">A user registers/logs in, sees a role-correct shell, admins see the console, and the live URL works.</p></div>
+        </div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P2<small>.Content</small></div>
+        <div>
+          <h3>Roadmaps & content library</h3>
+          <p class="goal">The substance: structured learning a student can actually move through, and an authoring path for admins.</p>
+          <ul>
+            <li>Data model: Pillar → Roadmap → Module → Lesson → Resource.</li>
+            <li>Seed Subject roadmaps (grades 6–12, core subjects) + Innovation roadmaps (coding, prompt engg, AI tools, ML, app-building, cyber basics).</li>
+            <li>Library + lesson view: video, notes, quiz, curated external link — all in roadmap context.</li>
+            <li>Admin authoring: build roadmaps, attach resources, reorder.</li>
+            <li>Progress: lesson-completed, roadmap %, "continue learning".</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">A student completes a roadmap end-to-end and sees progress; an admin authors a module without touching code.</p></div>
+        </div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P3<small>.Live</small></div>
+        <div>
+          <h3>Live classes (Jitsi)</h3>
+          <p class="goal">The core of the brand: Shivani & Devendra teaching, live, to real students — fully integrated, not a pasted link.</p>
+          <ul>
+            <li>Self-hosted Jitsi, JWT-secured rooms named per class; embed via iframe with controlled entry.</li>
+            <li>Admin scheduling: create a class, link it to a roadmap/subject, set time & batch.</li>
+            <li>"Join live" from web & mobile; attendance auto-captured from participant events.</li>
+            <li>Live chat / Q&A / polls over WebSockets; hand-raise queue.</li>
+            <li>Recording archived automatically → listed back in the library post-class; replay.</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">Shivani or Devendra hosts one real live class; students join from either platform; attendance & recording are saved untouched.</p></div>
+        </div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P4<small>.Challenges</small></div>
+        <div>
+          <h3>Challenges & gamification</h3>
+          <p class="goal">The hook that turns "a course" into "a daily practice." Growth should feel like progress, not homework.</p>
+          <ul>
+            <li>Daily engine: one small task/day (subject quiz, coding problem, prompt task) — keeps the streak.</li>
+            <li>Weekly challenge: coding / prompt-engg / worksheet with submission + admin review.</li>
+            <li>Monthly capstone: build a mini app or solve a research-backed problem; leaderboard + featured showcase.</li>
+            <li>XP, levels, badges, streaks, skill points feeding the skill tree.</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">A full 30-day rhythm runs — daily → weekly → monthly — with XP, badges and a live leaderboard.</p></div>
+        </div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P5<small>.Profile</small></div>
+        <div>
+          <h3>Profile, portfolio & community</h3>
+          <p class="goal">Make the student's growth visible — to them, to peers, and to whoever they show it to next.</p>
+          <ul>
+            <li>Public portfolio: pinned projects, prompts, write-ups; shareable URL & auto-certificates.</li>
+            <li>Skill tree + progress dashboard (XP over time, mastery, completion %).</li>
+            <li>Leaderboard (weekly / monthly / all-time) + batch cohort ranking.</li>
+            <li>Per-topic discussion & peer Q&A — helpful answers earn small XP.</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">A student has a shareable profile & portfolio; admins can feature work; the community is alive and answering each other.</p></div>
+        </div>
+      </div>
+
+      <div class="phase nums">
+        <div class="num">P6<small>.Launch</small></div>
+        <div>
+          <h3>Polish, mobile parity & launch</h3>
+          <p class="goal">Make it shippable to a real batch — offline, pushed, hardened, and measurable.</p>
+          <ul>
+            <li>React Native parity: offline content downloads, FCM push, attend live from mobile; web PWA.</li>
+            <li>Notifications live (FCM + email): class reminders, deadlines, results, announcements.</li>
+            <li>Hardening: rate limits, backups, security review, student-data privacy.</li>
+            <li>Admin analytics dashboard: signups, engagement, completion, churn.</li>
+            <li>Soft-launch a real batch; collect feedback; payments tier (Razorpay) only if monetised.</li>
+          </ul>
+          <div class="exit"><span class="lab">Exit</span><p class="tx">A real (free or paying) batch runs end-to-end, stably, with Shivani & Devendra operating it daily.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROLES -->
+    <section id="roles">
+      <hr class="rule gold">
+      <h2>Admins & hosts</h2>
+      <p>Two people run the product from inside it. The console is built so a non-engineer can host a class, set a challenge and grade it without filing a ticket.</p>
+      <div class="roles">
+        <div class="role">
+          <p class="nm">Shivani</p><span class="tg">ADMIN · HOST</span>
+          <ul>
+            <li>Hosts live classes</li>
+            <li>Authors content & roadmaps</li>
+            <li>Sets & reviews challenges</li>
+            <li>Manages batches & students</li>
+          </ul>
+        </div>
+        <div class="role">
+          <p class="nm">Devendra</p><span class="tg">ADMIN · HOST</span>
+          <ul>
+            <li>Hosts live classes</li>
+            <li>Owns the tech-track content</li>
+            <li>Grades coding & capstone work</li>
+            <li>Reads engagement analytics</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- STACK -->
+    <section id="stack">
+      <hr class="rule gold">
+      <h2>Tech stack</h2>
+      <p class="sub">Boring, proven, cheap to run at one batch — and able to scale past thousands without a rewrite.</p>
+      <div class="stack nums">
+        <div class="row"><div class="lab">Web</div><div class="val">Next.js (App Router) · TypeScript · Tailwind · shadcn/ui</div></div>
+        <div class="row"><div class="lab">Mobile</div><div class="val">React Native (Expo) <span class="muted">— shares API client & types with web</span></div></div>
+        <div class="row"><div class="lab">Live video</div><div class="val">Jitsi Meet · self-hosted <span class="muted">videobridge, JWT room auth</span></div></div>
+        <div class="row"><div class="lab">Backend</div><div class="val">Node.js · tRPC/REST · JWT auth <span class="muted">— lives inside the Next.js app to start</span></div></div>
+        <div class="row"><div class="lab">Data</div><div class="val">PostgreSQL · Prisma ORM · Redis <span class="muted">(cache, queues, sessions)</span></div></div>
+        <div class="row"><div class="lab">Storage</div><div class="val">S3-compatible <span class="muted">— recordings, uploads</span></div></div>
+        <div class="row"><div class="lab">Realtime</div><div class="val">Jitsi (video) · WebSockets <span class="muted">(chat, Q&A, notifications)</span></div></div>
+        <div class="row"><div class="lab">Auth</div><div class="val">Email OTP (MSG91/Twilio) · Google OAuth</div></div>
+        <div class="row"><div class="lab">Notifications</div><div class="val">In-app · Email (Resend/SES) · FCM push <span class="muted">(mobile)</span></div></div>
+        <div class="row"><div class="lab">Payments</div><div class="val">Razorpay <span class="muted">— optional, Phase&nbsp;6 only</span></div></div>
+        <div class="row"><div class="lab">Infra</div><div class="val">Docker · VPS · Cloudflare CDN</div></div>
+        <div class="row"><div class="lab">Analytics</div><div class="val">Posthog or self-hosted Plausible</div></div>
+      </div>
+    </section>
+
+    <!-- LAUNCH -->
+    <section id="launch">
+      <hr class="rule gold">
+      <h2>How we start small</h2>
+      <p>One cohort, two admins, free first. The loop that has to close before anything else matters: <b>a student opens the app → sees today's lesson and challenge → attends the live class → earns XP → next day it's waiting for them again.</b> Close that loop in Phases&nbsp;1–4 with real content. Profile, community, parity and scale follow only once the loop holds.</p>
+      <p>Payments, a marketing site and "big launch" scale are explicitly deferred to Phase&nbsp;6 — they're a reward for a product that already retains a batch, not a fix for one that doesn't.</p>
+    </section>
+
+    <p class="note">This is the plan to execute against. Next step when you're ready: scaffold the monorepo (Phase&nbsp;1) — <code>web</code>, <code>mobile</code>, <code>shared</code> — and stand up auth with the two seeded admins. Built by Shivani & Devendra · Tuiton · 2026.</p>
+
+  </main>
+</div>
+
+<script>
+/* Keep the side-nav selection in sync with scroll, and respect reduced motion. */
+(function(){
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav a[href^="#"]'));
+  var map = {};
+  links.forEach(function(a){ var id = a.getAttribute('href').slice(1); if(id){ var el = document.getElementById(id); if(el) map[id] = a; }});
+  if('IntersectionObserver' in window && !reduce){
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ links.forEach(function(l){l.classList.remove('sel')}); var a = map[e.target.id]; if(a) a.classList.add('sel'); } });
+    }, {rootMargin:'-45% 0px -50% 0px'});
+    Object.keys(map).forEach(function(id){ obs.observe(document.getElementById(id)); });
+  }
+})();
+</script>

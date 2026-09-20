@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d97706;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="tealGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0d9488;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#14b8a6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="250" fill="url(#goldGradient)"/>
+  <!-- Inner circle -->
+  <circle cx="256" cy="256" r="200" fill="url(#tealGradient)"/>
+  <!-- T letter -->
+  <text x="256" y="300" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">T</text>
+  <!-- Accent dots -->
+  <circle cx="180" cy="180" r="15" fill="#fef08a" opacity="0.8"/>
+  <circle cx="332" cy="332" r="10" fill="#a7f3d0" opacity="0.8"/>
+</svg>

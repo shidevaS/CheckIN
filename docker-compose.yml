@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: tuiton-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tuiton
+      POSTGRES_PASSWORD: development_password_change_in_prod
+      POSTGRES_DB: tuiton
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./packages/db/prisma/schema.prisma:/docker-entrypoint-initdb.d/schema.prisma:ro
+    ports:
+      - "5432:5432"
+
+  # Redis for sessions and caching
+  redis:
+    image: redis:7-alpine
+    container_name: tuiton-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # Tuiton App
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tuiton-app
+    restart: unless-stopped
+    env_file:
+      - apps/web/.env.production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  db-data:

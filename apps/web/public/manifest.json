@@ -1,0 +1,21 @@
+{
+  "name": "Tuiton Academy",
+  "short_name": "Tuiton",
+  "description": "Your AI-powered learning platform for coding, AI agents, and innovation skills",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F4F6F9",
+  "theme_color": "#d97706",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity", "utilities"],
+  "screenshots": []
+}
