@@ -14,7 +14,14 @@ export async function GET() {
       _count: { select: { comments: true } },
     },
   });
-  return NextResponse.json(topics);
+
+  // Add likeCount field (defaults to 0 for now)
+  const topicsWithLikes = topics.map(topic => ({
+    ...topic,
+    likeCount: 0,
+  }));
+
+  return NextResponse.json(topicsWithLikes);
 }
 
 export async function POST(req: NextRequest) {

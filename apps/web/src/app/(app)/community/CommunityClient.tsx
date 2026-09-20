@@ -16,6 +16,7 @@ interface Topic {
   content: string;
   tag: string;
   createdAt: string;
+  likeCount?: number;
   user: { id: string; name: string };
   _count: { comments: number };
   comments?: Comment[];
@@ -187,7 +188,7 @@ export default function CommunityClient({ initialTopics, sessionUser }: Communit
 
         <TabsContent value="popular" className="pt-4">
           <div className="space-y-3">
-            {...topics}
+            {topics
               .sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0))
               .slice(0, 10)
               .map((topic) => (

@@ -14,7 +14,7 @@ function Slot({ children, className, ...props }: { children: ReactNode } & Recor
 
 /* ---------- Button ---------- */
 type Variant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
-type Size = "sm" | "md" | "lg";
+type Size = "sm" | "md" | "lg" | "icon";
 
 const btnVariants: Record<Variant, string> = {
   primary:
@@ -31,6 +31,7 @@ const btnSizes: Record<Size, string> = {
   sm: "h-8 px-3 text-sm",
   md: "h-10 px-4 text-sm",
   lg: "h-11 px-6 text-base",
+  icon: "h-10 w-10 p-0",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -140,7 +141,7 @@ export function Badge({
 }: {
   className?: string;
   tone?: "neutral" | "gold" | "teal" | "live";
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "secondary";
 } & React.HTMLAttributes<HTMLSpanElement>) {
   const tones = {
     neutral: "bg-muted text-muted-foreground",
@@ -151,6 +152,7 @@ export function Badge({
   const variants = {
     default: "",
     outline: "bg-transparent border border-border",
+    secondary: "bg-secondary text-secondary-foreground",
   };
   return (
     <span
@@ -279,6 +281,15 @@ export function SelectItem({ className, value, children, ...props }: { className
 /* ---------- Separator ---------- */
 export function Separator({ className, ...props }: { className?: string } & React.HTMLAttributes<HTMLHRElement>) {
   return <hr className={clsx("border-border", className)} {...props} />;
+}
+
+/* ---------- ScrollArea ---------- */
+export function ScrollArea({ className, children, ...props }: { className?: string; children: ReactNode } & React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={clsx("overflow-auto", className)} {...props}>
+      {children}
+    </div>
+  );
 }
 
 /* ---------- Avatar ---------- */
