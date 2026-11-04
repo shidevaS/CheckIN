@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
       summary: summary?.trim() || "",
       type: type || "ai-agent",
       link: link?.trim() || null,
+      tags: JSON.stringify(["portfolio", "project"]),
+      difficulty: "INTERMEDIATE",
     },
   });
   return NextResponse.json(project);

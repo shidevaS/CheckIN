@@ -17,7 +17,8 @@
     "db:push": "npm run db:push --workspace @tuiton/db",
     "db:seed": "npm run db:seed --workspace @tuiton/db",
     "db:studio": "npm run db:studio --workspace @tuiton/db",
-    "mobile:start": "npm start --workspace apps/mobile"
+    "mobile:start": "npm start --workspace apps/mobile",
+    "vercel-build": "npm install && npm run build --workspace apps/web"
   },
   "engines": {
     "node": ">=20"

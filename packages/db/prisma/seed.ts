@@ -21,6 +21,7 @@ async function main() {
         email: a.email,
         role: "ADMIN",
         passwordHash: hashPassword(ADMIN_PASSWORD),
+        pillar: "SUBJECTS",
       },
     });
     console.log(`✓ admin  ${a.email}`);
@@ -35,6 +36,7 @@ async function main() {
       email: "student@tuiton.app",
       role: "STUDENT",
       passwordHash: hashPassword(STUDENT_PASSWORD),
+      pillar: "subjects",
       profile: {
         create: {
           grade: "9",
@@ -506,12 +508,12 @@ async function main() {
   await prisma.certificate.upsert({
     where: { userId_slug: { userId: student!.id, slug: "math-ix-completion" } },
     update: {},
-    create: { userId: student!.id, slug: "math-ix-completion", title: "Mathematics IX Completion", issuer: "Tuiton Academy" },
+    create: { userId: student!.id, slug: "math-ix-completion", title: "Mathematics IX Completion", issuer: "Tuiton Academy", certificationType: "FREE", credentialId: "cred-math-ix-001" },
   });
   await prisma.certificate.upsert({
     where: { userId_slug: { userId: student!.id, slug: "ai-foundations" } },
     update: {},
-    create: { userId: student!.id, slug: "ai-foundations", title: "AI Foundations Certificate", issuer: "Tuiton Academy" },
+    create: { userId: student!.id, slug: "ai-foundations", title: "AI Foundations Certificate", issuer: "Tuiton Academy", certificationType: "FREE", credentialId: "cred-ai-foundations-001" },
   });
   console.log("✓ certificates seeded");
 
@@ -529,6 +531,8 @@ async function main() {
       type: "ai-agent",
       link: "https://github.com/demo/fizzbuzz-agent",
       pinned: true,
+      tags: JSON.stringify(["fizzbuzz", "ai", "agent", "automation"]),
+      difficulty: "INTERMEDIATE",
     },
   });
   await prisma.project.upsert({
@@ -542,6 +546,8 @@ async function main() {
       type: "coding",
       link: "https://quadratic-solver.vercel.app",
       pinned: true,
+      tags: JSON.stringify(["quadratic", "math", "web", "app"]),
+      difficulty: "BEGINNER",
     },
   });
   await prisma.project.upsert({
@@ -554,7 +560,9 @@ async function main() {
       summary: "Ask any Class 9/10 science question — the agent retrieves & explains",
       type: "ai-agent",
       link: "https://github.com/demo/ncert-rag",
-      pinned: false,
+      pinned: true,
+      tags: JSON.stringify(["rag", "science", "ncert", "qa"]),
+      difficulty: "INTERMEDIATE",
     },
   });
   console.log("✓ projects seeded");
@@ -569,6 +577,7 @@ async function main() {
       title: "Welcome to Tuiton — introduce yourself!",
       body: "Hi everyone! Shivani here. Tell us your grade, interests, and what you want to build.",
       tag: "general",
+      tags: JSON.stringify(["introduce", "welcome", "general"]),
     },
   });
   await prisma.forumTopic.upsert({
@@ -580,15 +589,16 @@ async function main() {
       title: "Best way to learn Python for AI?",
       body: "I know basics. What's the path to building agents?",
       tag: "help",
+      tags: JSON.stringify(["python", "ai", "learning", "path"]),
     },
   });
   console.log("✓ forum topics seeded");
 
   // Notifications for student
   for (const n of [
-    { title: "Welcome to Tuiton!", body: "Start with a daily challenge or join a live class.", href: "/dashboard" },
-    { title: "New AI Agent roadmap live", body: "Build autonomous agents — 4 modules, 12 lessons.", href: "/roadmaps/ai-agents-building" },
-    { title: "Your certificate is ready", body: "AI Foundations Certificate earned!", href: "/profile" },
+    { title: "Welcome to Tuiton!", body: "Start with a daily challenge or join a live class.", href: "/dashboard", type: "system" },
+    { title: "New AI Agent roadmap live", body: "Build autonomous agents — 4 modules, 12 lessons.", href: "/roadmaps/ai-agents-building", type: "course" },
+    { title: "Your certificate is ready", body: "AI Foundations Certificate earned!", href: "/profile", type: "certification" },
   ]) {
     await prisma.notification.create({ data: { userId: student!.id, ...n } });
   }

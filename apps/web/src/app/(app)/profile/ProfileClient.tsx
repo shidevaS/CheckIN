@@ -236,13 +236,13 @@ export default function ProfileClient({
             </CardHeader>
             <CardContent>
               {projects.length === 0 && !showAddProject ? (
-                <p className="text-muted-foreground text-center py-8">No projects yet. Click "Add Project" to showcase your work!</p>
+                <p className="text-muted-foreground text-center py-8">No projects yet. Click &#39;Add Project&#39; to showcase your work!</p>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {projects.map((project) => (
                     <div key={project.id} className="border border-border rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
                       {project.imageUrl && (
-                        <img src={project.imageUrl} alt={project.title} className="w-full h-40 object-cover" />
+                        <img src={project.imageUrl} alt={project.title} className="w-full h-40 object-cover" loading="lazy" />
                       )}
                       <div className="p-4 space-y-3">
                         <h3 className="font-semibold text-lg">{project.title}</h3>

@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@tuiton/db";
 import { getSession } from "@/lib/session";
 
-function scoreQuiz(answers: number[], quiz: any[]): number {
-  return Math.round((answers.filter((a, i) => a === quiz[i]?.answer).length / quiz.length) * 100);
-}
+const submissionSchema = z.object({
+  answers: z.array(z.number().int().nonnegative()).max(100).optional(),
+  content: z.string().trim().max(12000).optional(),
+  code: z.string().trim().max(12000).optional(),
+  prompt: z.string().trim().max(12000).optional(),
+}).refine((value) => Boolean(value.answers || value.content || value.code || value.prompt), {
+  message: "A quiz answer or written submission is required.",
+});
 
 export async function POST(
   req: Request,
@@ -14,10 +20,20 @@ export async function POST(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { challengeId } = await params;
-  const body = await req.json();
+  let rawBody: unknown;
+  try { rawBody = await req.json(); } catch {
+    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+  }
+  const parsed = submissionSchema.safeParse(rawBody);
+  if (!parsed.success) return NextResponse.json({ error: "Provide a valid answer." }, { status: 400 });
+  const body = parsed.data;
 
   const challenge = await prisma.challenge.findUnique({ where: { id: challengeId } });
-  if (!challenge) return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
+  if (!challenge || !challenge.published) return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
+  const now = new Date();
+  if ((challenge.startsAt && now < challenge.startsAt) || (challenge.endsAt && now > challenge.endsAt)) {
+    return NextResponse.json({ error: "This challenge is not currently accepting submissions." }, { status: 400 });
+  }
 
   // Check for existing submission
   const existing = await prisma.challengeSubmission.findUnique({
@@ -28,61 +44,56 @@ export async function POST(
     return NextResponse.json({ error: "Already submitted" }, { status: 400 });
   }
 
-  let score = 100;
-  let autoPassed = true;
-  let feedback = "";
+  let score: number | null = null;
+  let autoPassed = false;
+  let feedback = "Your work has been submitted for tutor review.";
 
   if (challenge.kind === "QUIZ" && challenge.options && body.answers) {
-    const quiz = JSON.parse(challenge.options);
-    score = scoreQuiz(body.answers, quiz);
+    let quiz: Array<{ answer: number }>;
+    try { quiz = JSON.parse(challenge.options); } catch {
+      return NextResponse.json({ error: "This quiz is temporarily unavailable." }, { status: 500 });
+    }
+    if (!Array.isArray(quiz) || quiz.length === 0 || body.answers.length !== quiz.length || quiz.some((item) => !Number.isInteger(item.answer))) {
+      return NextResponse.json({ error: "Answer count does not match this quiz." }, { status: 400 });
+    }
+    score = Math.round((body.answers.filter((answer, index) => answer === quiz[index].answer).length / quiz.length) * 100);
     autoPassed = score >= 70;
-    if (!autoPassed) feedback = "Score below 70%. Review the material and try next time!";
-  } else if (challenge.kind === "CODING" && body.code) {
-    // In production, this would run in a sandbox
-    // For now, auto-approve with feedback
-    autoPassed = true;
-    feedback = "Code submitted for review. Great effort!";
-  } else if (challenge.kind === "PROMPT_AI" && (body.prompt || body.content)) {
-    autoPassed = true;
-    feedback = "Prompt submitted! Try running it in your favorite LLM.";
-  } else {
-    // Generic submission
-    autoPassed = true;
-    feedback = "Submission received!";
+    feedback = autoPassed ? "Quiz passed. Great work!" : "Score below 70%. Review the material and try again.";
+  } else if (challenge.kind === "QUIZ") {
+    return NextResponse.json({ error: "Quiz answers are required." }, { status: 400 });
   }
 
   const xpAwarded = autoPassed ? challenge.xp : 0;
-  const status = autoPassed ? "APPROVED" : "REJECTED";
-
-  const submission = await prisma.challengeSubmission.create({
-    data: {
-      challengeId,
-      userId: session.sub,
-      content: body.content || body.code || body.prompt || JSON.stringify(body),
-      score,
-      autoPassed,
-      status,
-      xpAwarded,
-      feedback: autoPassed ? undefined : feedback,
-      gradedAt: autoPassed ? new Date() : null,
-    },
+  const submission = await prisma.$transaction(async (tx) => {
+    const created = await tx.challengeSubmission.create({
+      data: {
+        challengeId,
+        userId: session.sub,
+        content: body.content || body.code || body.prompt || JSON.stringify(body.answers),
+        score,
+        autoPassed: challenge.kind === "QUIZ" ? autoPassed : null,
+        status: autoPassed ? "APPROVED" : challenge.kind === "QUIZ" ? "REJECTED" : "SUBMITTED",
+        xpAwarded,
+        feedback,
+        gradedAt: autoPassed ? new Date() : null,
+      },
+    });
+    if (autoPassed) {
+      await tx.studentProfile.update({ where: { userId: session.sub }, data: { xp: { increment: challenge.xp }, lastActive: new Date() } });
+      await tx.xpLog.create({ data: { userId: session.sub, amount: challenge.xp, reason: `Challenge: ${challenge.title}`, itemId: challengeId, itemType: "challenge" } });
+    }
+    return created;
+  }).catch((error: unknown) => {
+    if (error && typeof error === "object" && "code" in error && error.code === "P2002") return null;
+    throw error;
   });
-
-  if (autoPassed) {
-    await prisma.$transaction([
-      prisma.studentProfile.update({
-        where: { userId: session.sub },
-        data: { xp: { increment: challenge.xp }, lastActive: new Date() },
-      }),
-      prisma.xpLog.create({
-        data: { userId: session.sub, amount: challenge.xp, reason: `Challenge: ${challenge.title}`, itemId: challengeId },
-      }),
-    ]);
+  if (!submission) {
+    return NextResponse.json({ error: "Already submitted" }, { status: 409 });
   }
 
   return NextResponse.json({
     score,
-    passed: autoPassed,
+    passed: challenge.kind === "QUIZ" ? autoPassed : null,
     xpAwarded,
     feedback,
     status: submission.status,

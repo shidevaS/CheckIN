@@ -38,6 +38,7 @@ export async function POST(
     await prisma.notification.create({
       data: {
         userId: topic.userId,
+        type: "comment",
         title: "New comment on your topic",
         body: `${session.name} replied to "${topic.title}"`,
         href: `/community#topic-${id}`,

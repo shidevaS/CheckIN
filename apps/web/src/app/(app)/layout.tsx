@@ -30,6 +30,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <Link href="/roadmaps" className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
                 Roadmaps
               </Link>
+              <Link href="/courses" className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+                Courses
+              </Link>
+              <Link href="/tutor" className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
+                AI Tutor
+              </Link>
               <Link href="/live" className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
                 Live Classes
               </Link>

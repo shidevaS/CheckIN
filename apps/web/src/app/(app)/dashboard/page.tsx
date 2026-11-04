@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@tuiton/db";
 import { PILLARS } from "@tuiton/shared";
 import { getSession } from "@/lib/session";
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -60,68 +60,51 @@ export default async function DashboardPage() {
         <Stat label="Campus" value={user?.role === "ADMIN" ? "Admin" : (profile?.grade || "—") || "—"} />
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-3">
-        {/* Pillars */}
-        <div className="lg:col-span-2">
-          <h2 className="mb-3 font-serif text-xl font-semibold">Two pillars, one roof</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {PILLARS.map((p) => (
-              <Card key={p.id}>
-                <CardHeader>
-                  <CardTitle className="font-serif text-lg">{p.label}</CardTitle>
-                  <CardDescription>{p.tagline}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <Link href="/dashboard">Coming in Phase 2</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Today */}
+      <section className="space-y-4">
         <div>
-          <h2 className="mb-3 font-serif text-xl font-semibold">Today</h2>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Badge tone="live">Soon</Badge>
-                <CardTitle className="text-base">Live class</CardTitle>
-              </div>
-              <CardDescription>Live classes launch in Phase 3.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Daily challenge</span>
-                <span className="text-foreground">Phase 4</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Continue learning</span>
-                <span className="text-foreground">—</span>
-              </div>
-              <p className="pt-1 text-xs text-muted-foreground">
-                Phase 1 ships identity &amp; shell. Lessons, live classes and challenges build on this foundation.
-              </p>
-            </CardContent>
-          </Card>
+          <h2 className="font-serif text-xl font-semibold">Choose what to work on</h2>
+          <p className="mt-1 text-sm text-muted-foreground">School learning and practical technology skills, in one place.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PILLARS.map((pillar) => (
+            <Card key={pillar.id}>
+              <CardHeader>
+                <CardTitle className="font-serif text-lg">{pillar.label}</CardTitle>
+                <CardDescription>{pillar.tagline}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link href="/roadmaps">Explore learning paths</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {isAdmin && (
+      <section className="grid gap-5 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="font-serif text-lg">Community</CardTitle>
-            <CardDescription>Live counts from the database.</CardDescription>
+            <CardTitle className="font-serif text-lg">Ask the AI Tutor</CardTitle>
+            <CardDescription>Get a clear explanation, practice a concept, or explore a coding question.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
-            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">{totalUsers}</p><p className="text-muted-foreground">Total accounts</p></div>
-            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">2</p><p className="text-muted-foreground">Admins</p></div>
-            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">{totalUsers - 2}</p><p className="text-muted-foreground">Students</p></div>
-          </CardContent>
+          <CardContent><Button className="w-full" asChild><Link href="/tutor">Open tutor</Link></Button></CardContent>
         </Card>
-      )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Build a study habit</CardTitle>
+            <CardDescription>Try a short daily task or take on a longer weekly challenge.</CardDescription>
+          </CardHeader>
+          <CardContent><Button variant="outline" className="w-full" asChild><Link href="/challenges">View challenges</Link></Button></CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Find your next course</CardTitle>
+            <CardDescription>Explore the available free and paid course catalog.</CardDescription>
+          </CardHeader>
+          <CardContent><Button variant="outline" className="w-full" asChild><Link href="/courses">Browse courses</Link></Button></CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

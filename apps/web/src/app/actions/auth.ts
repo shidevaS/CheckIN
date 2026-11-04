@@ -53,6 +53,7 @@ export async function register(input: unknown): Promise<ActionResult> {
       email,
       passwordHash: hashPassword(password),
       role: "STUDENT",
+      pillar: "subjects",
       profile: { create: { grade: "", school: "" } },
     },
   });

@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       title: title.trim(),
       body: content.trim(),
       tag: tag || "general",
+      tags: JSON.stringify(["general", "discussion"]),
     },
     include: {
       user: { select: { id: true, name: true } },

@@ -4,6 +4,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enhanced generator config
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,8 +16,10 @@ model User {
   passwordHash String?
   role         String   @default("STUDENT") // STUDENT | ADMIN
   headline     String? // short public tagline (portfolio)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+    pillar       String   // subjects | innovation
+    gradeLevel   String?  // e.g. "6-8", "9-10", "primary", "secondary"
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
   profile          StudentProfile?
   submissions      ChallengeSubmission[] @relation("ChallengeSubmissions")
@@ -25,13 +28,17 @@ model User {
   attendance       ClassAttendance[]
   certificates     Certificate[]
   projects         Project[]
-  notifications    Notification[]
-  chatMessages     ClassChat[]
-  requests         SupportRequest[]
-  gradedSubmissions ChallengeSubmission[] @relation("GradedSubmissions") // as reviewer
-  xpLogs         XpLog[]
-  forumTopics      ForumTopic[]
-  forumComments    ForumComment[]
+    aiInteractions   AIInteraction[] // AI tutoring session history
+    notifications    Notification[]
+    chatMessages     ClassChat[]
+    requests         SupportRequest[]
+    gradedSubmissions ChallengeSubmission[] @relation("GradedSubmissions") // as reviewer
+    xpLogs         XpLog[]
+    forumTopics      ForumTopic[]
+    forumComments    ForumComment[]
+    courseEnrollments CourseEnrollment[]
+    competitionEnrollments CompetitionEnrollment[]
+    wishlists Wishlist[]
 
   @@map("user")
 }
@@ -52,8 +59,12 @@ model StudentProfile {
   skills     String   @default("[]") // JSON array of earned skill/badge slugs
   badges     String   @default("[]") // JSON array of earned badge slugs
   skillsTree  String   @default("{}") // JSON map of skillSlug -> progress 0..100
+    primaryFocus  String?  // e.g. "maths", "science", "english", "ai-fundamentals
+    competitionRank String? // e.g. "gold", "silver", "bronze"
+    totalChallengesCompleted Int @default(0)
+    totalXPEarned   Int @default(0)
 
-  @@map("student_profile")
+    @@map("student_profile")
 }
 
 // --- Learning content (Phase 2) 
@@ -175,15 +186,35 @@ model ClassChat {
   createdAt DateTime @default(now())
 }
 
-// --- Challenges & gamification (Phase 4) 
+model AIInteraction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   String   // unique session identifier
+  prompt      String   // the user's prompt/query
+  response    String   // AI's response/teaching
+  kind        String   // e.g. "math_help", "coding", "essay", "concept_explain"
+  modelUsed   String?  // e.g. "gpt-4", "gpt-3.5", "claude"
+  tokensUsed  Int?
+  rating      Int?     // user rating 1-5
+    topic       String?
+    difficultyLevel String?
+    timeSpent   Int?
+    successRate Int?
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, sessionId])
+}
+
+// --- Challenges & gamification (Phase 4)
 
 model Challenge {
   id          String   @id @default(cuid())
-  kind        String   @default("QUIZ") // QUIZ | CODING | PROMPT_AI | PRACTICE | BADGE_TASK
+  kind        String   // QUIZ | CODING | PROMPT_AI | PRACTICE | BADGE_TASK
   title       String
   prompt      String
-  cadence     String   @default("DAILY") // DAILY | WEEKLY | MONTHLY
-  difficulty  String   @default("BEGINNER") // BEGINNER | INTERMEDIATE | ADVANCED
+  cadence     String   // DAILY | WEEKLY | MONTHLY
+  difficulty  String   // BEGINNER | INTERMEDIATE | ADVANCED
   strand      String? // subject/roadmap tag e.g. "maths", "ai-agents"
   options     String? // JSON for QUIZ kind: [{ prompt, options[], answer }]
   answer      String? // expected answer / rubric hint (auto-check for QUIZ)
@@ -228,6 +259,7 @@ model XpLog {
   amount    Int
   reason    String
   itemId    String? // lesson / challenge / submission id
+    itemType  String?
   createdAt DateTime @default(now())
 }
 
@@ -250,6 +282,12 @@ model Certificate {
   title       String
   issuer      String   @default("Tuiton Academy")
   issuedAt    DateTime @default(now())
+  certificationType String   // FREE or PAID
+  roadmapId   String? // which roadmap/course this cert is for
+  completedAt DateTime?
+  credentialId String   // verifiable credential ID
+  credentialUrl String? // URL to verify the certificate
+  expiresAt   DateTime? // optional expiry date for recertification
 
   @@unique([userId, slug])
 }
@@ -262,13 +300,17 @@ model Project {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   summary     String
-  type        String   @default("ai-agent") // ai-agent | coding | science | art | presentation
+  type        String   // ai-agent | coding | science | art | presentation | design
   link        String?
+  githubUrl   String?  // GitHub repository link
   pinned      Boolean  @default(false)
   createdAt   DateTime @default(now())
+  xpAwarded   Int      @default(0) // XP awarded for this project
+  tags        String   // JSON array of tags for categorization
+  difficulty  String   // BEGINNER | INTERMEDIATE | ADVANCED
 }
 
-// --- Community & support (Phase 5) 
+// --- Community & support (Phase 5)
 
 model ForumTopic {
   id        String      @id @default(cuid())
@@ -277,6 +319,7 @@ model ForumTopic {
   title     String
   body      String
   tag       String      @default("general")
+  tags      String     // JSON array of tags for categorization
   createdAt DateTime    @default(now())
 
   comments ForumComment[]
@@ -300,6 +343,8 @@ model Notification {
   body      String
   href      String?
   read      Boolean  @default(false)
+  type      String   // challenge, course, certification, competition, system, course_enrollment, competition_result, ai_interaction
+  relatedId String? // ID of related resource (challenge, course, certification, competition, etc.)
   createdAt DateTime @default(now())
 }
 
@@ -311,4 +356,120 @@ model SupportRequest {
   category  String   @default("general")
   message   String
   createdAt DateTime @default(now())
+}
+
+// --- New: Certification & Primary Schooling Courses (Phase 6) ---
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String
+  kind          String   // "primary", "secondary", "advanced", "certification"
+  tier          String   // "FREE", "PAID"
+  price         Int?     // in cents, nullable for FREE
+  durationWeeks Int      @default(12)
+  isPublished   Boolean  @default(true)
+  subjectArea   String   // "math", "science", "english", "sst", "coding", "arts", etc.
+  gradeLevel    String   // "1-2", "3-5", "6-8", "9-10", "primary", "secondary"
+  prerequisites String   // JSON array of course slugs
+  learningObjectives String // JSON array of objective strings
+  mediaUrl      String?  // YouTube or video link
+  xpAwarded     Int      @default(50)
+  createdAt     DateTime @default(now())
+
+  enrollments CourseEnrollment[]
+  lessons     CourseLesson[]
+    wishlists   Wishlist[]
+}
+
+model CourseEnrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    Int      @default(0) // 0-100
+  completed   Boolean  @default(false)
+  enrolledAt  DateTime @default(now())
+  completedAt DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model CourseLesson {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId    String   // links to Lesson or new standalone lessons
+  order       Int      @default(0)
+  completed   Boolean  @default(false)
+
+  @@unique([courseId, lessonId])
+}
+
+// --- New: Competition System (Phase 7) ---
+
+model Competition {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  prize       String   // e.g., "certificate", "badge", "cash", "scholarship"
+  tier        String   // "BEGINNER", "INTERMEDIATE", "ADVANCED"
+  isPublished Boolean  @default(true)
+  maxParticipants Int? // null for unlimited
+  createdAt   DateTime @default(now())
+
+  enrollments CompetitionEnrollment[]
+    badges      CompetitionBadge[]
+}
+
+model CompetitionEnrollment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  competitionId String
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  status      String   // "ENROLLED", "IN_PROGRESS", "COMPLETED", "WITHDRAWN"
+  rank        String?  // "GOLD", "SILVER", "BRONZE", null if not ranked
+  score       Int?     // score achieved
+  xpAwarded   Int      @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@unique([userId, competitionId])
+}
+
+model CompetitionBadge {
+  id          String   @id @default(cuid())
+  competitionId String
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  badgeSlug   String
+  description String
+  requirement String // e.g., "solve-5-challenges", "score-above-80"
+  awardedTo   String?  // userId who earned it
+  awardedAt   DateTime?
+
+  @@unique([competitionId, badgeSlug])
+}
+
+// --- Enhanced AI Tutoring Interactions (Phase 8) ---
+
+// --- Updated: Notification types expansion ---
+
+// Note: Notification.type enum values are updated in seed data
+
+// --- New: Wishlist/Saved Courses ---
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, courseId])
 }
