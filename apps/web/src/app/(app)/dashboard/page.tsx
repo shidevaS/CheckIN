@@ -16,6 +16,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function BadgePill({ label, variant }: { label: string; variant?: "primary" | "secondary" }) {
+  const v = variant || "primary";
+  return (
+    <span className={inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium }>
+      {label}
+    </span>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
@@ -28,6 +37,50 @@ export default async function DashboardPage() {
   const isAdmin = session.role === "ADMIN";
   const profile = user?.profile;
 
+  // Daily alerts and upcoming events
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Mock daily alerts - in production, these would come from a scheduler/db
+  const dailyAlerts = [
+    {
+      id: "quiz-today",
+      type: "quiz",
+      title: "Daily Quiz Available",
+      description: "Complete today's quiz to earn 50 XP and maintain your streak",
+      action: "/challenges",
+      actionLabel: "Take Quiz",
+      urgency: "high",
+    },
+    {
+      id: "coding-round",
+      type: "coding",
+      title: "Coding Round",
+      description: "15-minute coding challenge - Python loops",
+      action: "/challenges",
+      actionLabel: "Start Coding",
+      urgency: "medium",
+    },
+    {
+      id: "homework-reminder",
+      type: "homework",
+      title: "Homework Due",
+      description: "Maths assignment - Algebra due tomorrow",
+      action: "/roadmaps",
+      actionLabel: "Check Details",
+      urgency: "high",
+    },
+    {
+      id: "project-showcase",
+      type: "project",
+      title: "New Project Challenge",
+      description: "Build a personal website - showcase your skills",
+      action: "/courses",
+      actionLabel: "View Project",
+      urgency: "medium",
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <header>
@@ -37,27 +90,54 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
           {isAdmin
-            ? "Operate the platform from here â€” host classes, author content, set challenges."
+            ? "Operate the platform from here — host classes, author content, set challenges."
             : "Your space for lessons, live classes and challenges. Everything below is built to completion, not to a demo."}
         </p>
       </header>
 
-      {isAdmin && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-[rgb(var(--primary)/0.4)] bg-[rgb(var(--primary)/0.08)] px-4 py-3">
-          <p className="text-sm">
-            <strong>You&apos;re an admin.</strong> Manage classes, content and students from the console.
+      {/* Daily Alerts Section */}
+      {isAdmin ? null : (
+        <section className="rounded-xl border border-border bg-card p-6 mb-8">
+          <h2 className="font-serif text-xl font-semibold mb-4">?? Today's Alerts</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Check out what's waiting for you today. Stay consistent and earn rewards!
           </p>
-          <Button size="sm" asChild>
-            <Link href="/admin">Open console</Link>
-          </Button>
-        </div>
+          <div className="space-y-3">
+            {dailyAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={p-4 rounded-lg border  animate-fade-in}
+              >
+                <div className="flex items-start gap-3">
+                  <span className={w-3 h-3 rounded-full  flex-shrink-0} aria-hidden="true" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-lg">{alert.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{alert.description}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    asChild
+                    href={alert.action}
+                  >
+                    <span className="font-medium">{alert.actionLabel}</span>
+                  </Button>
+                  <BadgePill label={alert.urgency === "high" ? "URGENT" : "Reminder"} variant={alert.urgency === "high" ? "secondary" : "primary"} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="XP" value={String(profile?.xp ?? 0)} />
         <Stat label="Level" value={String(profile?.level ?? 1)} />
         <Stat label="Day streak" value={String(profile?.streak ?? 0)} />
-        <Stat label="Campus" value={user?.role === "ADMIN" ? "Admin" : (profile?.grade || "â€”") || "â€”"} />
+        <Stat label="Campus" value={user?.role === "ADMIN" ? "Admin" : (profile?.grade || "—") || "—"} />
       </section>
 
       <section className="space-y-4">
@@ -105,6 +185,85 @@ export default async function DashboardPage() {
           <CardContent><Button variant="outline" className="w-full" asChild><Link href="/courses">Browse courses</Link></Button></CardContent>
         </Card>
       </section>
+
+      {/* Progress & Community Section */}
+      <section className="grid gap-5 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Your Progress</CardTitle>
+            <CardDescription>Track your learning journey and achievements</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">{profile?.xp ?? 0}</p>
+              <p className="text-muted-foreground">XP Earned</p>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">{profile?.level ?? 1}</p>
+              <p className="text-muted-foreground">Current Level</p>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">{profile?.streak ?? 0}</p>
+              <p className="text-muted-foreground">Day Streak</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Upcoming Challenges</CardTitle>
+            <CardDescription>Daily, weekly and monthly exercises</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">50+</p>
+              <p className="text-muted-foreground">Active Challenges</p>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">10</p>
+              <p className="text-muted-foreground">This Week</p>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">3</p>
+              <p className="text-muted-foreground">Monthly Goals</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Discussion Forum</CardTitle>
+            <CardDescription>Connect with peers and ask questions</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">1.2k</p>
+              <p className="text-muted-foreground">Active Discussions</p>
+            </div>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="font-semibold text-lg">24</p>
+              <p className="text-muted-foreground">Today's Topics</p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/community">View Forum</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Admin Console</CardTitle>
+            <CardDescription>Manage classes, content and students</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
+            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">{totalUsers}</p><p className="text-muted-foreground">Total accounts</p></div>
+            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">2</p><p className="text-muted-foreground">Admins</p></div>
+            <div className="rounded-lg bg-muted p-4"><p className="font-semibold text-lg">{totalUsers - 2}</p><p className="text-muted-foreground">Students</p></div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

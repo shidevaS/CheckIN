@@ -29,13 +29,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Enter a prompt of up to 4,000 characters." }, { status: 400 });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.NVIDIA_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "AI tutoring is not configured. Add GEMINI_API_KEY on the server." }, { status: 503 });
+    return NextResponse.json({ error: "AI tutoring is not configured. Add NVIDIA_API_KEY on the server." }, { status: 503 });
   }
 
   const { prompt, kind = "concept_explain", topic, difficultyLevel = "beginner" } = parsed.data;
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
 
   // Fetch user's learning context: current roadmap, recent lessons, and progress
   const user = await prisma.user.findUnique({
@@ -96,31 +95,36 @@ export async function POST(req: Request) {
   let tokensUsed: number | undefined;
   try {
     const upstream = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      "https://integrate.api.nvidia.com/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 1200, temperature: 0.6 },
+          model: "nvidia/nemotron",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.6,
+          max_tokens: 1200,
         }),
         signal: AbortSignal.timeout(30_000),
       }
     );
 
     if (!upstream.ok) {
-      console.error("Gemini request failed with status", upstream.status);
+      const errorText = await upstream.text();
+      console.error("NVIDIA request failed with status", upstream.status, errorText);
       return NextResponse.json({ error: "The tutor is temporarily unavailable. Please try again." }, { status: 502 });
     }
 
     const result = await upstream.json();
-    response = result.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part.text || "")
-      .join("")
-      .trim();
-    tokensUsed = result.usageMetadata?.totalTokenCount;
-    if (!response) throw new Error("Gemini returned no text");
+    response = result.choices?.[0]?.message?.content || "";
+    tokensUsed = result.usage?.total_tokens;
+    if (!response) throw new Error("NVIDIA returned no text");
   } catch (error) {
     console.error("AI tutor request failed:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json({ error: "The tutor is temporarily unavailable. Please try again." }, { status: 502 });
@@ -134,7 +138,7 @@ export async function POST(req: Request) {
         prompt,
         response,
         kind,
-        modelUsed: model,
+        modelUsed: "nvidia/nemotron",
         topic,
         difficultyLevel,
         tokensUsed,
@@ -144,5 +148,5 @@ export async function POST(req: Request) {
     console.error("Unable to save AI tutor history:", error instanceof Error ? error.message : "unknown error");
   }
 
-  return NextResponse.json({ response, kind, topic, difficultyLevel, model });
+  return NextResponse.json({ response, kind, topic, difficultyLevel, model: "nvidia/nemotron" });
 }
