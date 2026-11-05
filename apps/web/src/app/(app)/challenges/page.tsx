@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@tuiton/db";
 import { getSession } from "@/lib/session";
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import { ProgressRing } from "@/components/ui/progress-ring";
 
 export const metadata: Metadata = { title: "Daily Challenges" };
 
@@ -96,7 +97,7 @@ export default async function ChallengesPage() {
   const thisWeekKey = Number(`${now.getFullYear()}W${Math.ceil(now.getDate() / 7)}`);
   const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const [daily, weekly, monthly, submissionsData] = await Promise.all([
+  const [daily, weekly, monthly, submissionsData, userProgress, recentXpLogs] = await Promise.all([
     prisma.challenge.findMany({
       where: { published: true, cadence: "DAILY", dayKey: todayKey },
       orderBy: { createdAt: "desc" },
@@ -114,11 +115,19 @@ export default async function ChallengesPage() {
     }),
     prisma.challengeSubmission.findMany({
       where: { userId: session.sub },
-      select: { challengeId: true, status: true, xpAwarded: true, feedback: true },
+      select: { challengeId: true, status: true, xpAwarded: true, feedback: true, autoPassed: true, gradedAt: true },
+    }),
+    prisma.xpLog.findMany({
+      where: { userId: session.sub, reason: { startsWith: "Challenge" } },
+      orderBy: { createdAt: "desc" },
+      take: 5,
     }),
   ]);
 
   const submissions = new Map(submissionsData.map((s) => [s.challengeId, s]));
+  const challengeXpEarned = daily.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0) +
+                            weekly.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0) +
+                            monthly.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0);
 
   return (
     <div className="space-y-10">
@@ -161,23 +170,76 @@ export default async function ChallengesPage() {
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg bg-muted p-4 text-center">
-              <p className="font-serif text-2xl font-semibold">{daily.filter((c) => submissions.has(c.id)).length}</p>
+              <ProgressRing value={daily.filter((c) => submissions.has(c.id)).length * 10} size={32} thickness={6} color="primary" />
+              <p className="mt-2 font-serif text-xl font-semibold">{daily.filter((c) => submissions.has(c.id)).length}</p>
               <p className="text-sm text-muted-foreground">Daily Done</p>
             </div>
             <div className="rounded-lg bg-muted p-4 text-center">
-              <p className="font-serif text-2xl font-semibold">{weekly.filter((c) => submissions.has(c.id)).length}</p>
+              <ProgressRing value={weekly.filter((c) => submissions.has(c.id)).length * 10} size={32} thickness={6} color="teal" />
+              <p className="mt-2 font-serif text-xl font-semibold">{weekly.filter((c) => submissions.has(c.id)).length}</p>
               <p className="text-sm text-muted-foreground">Weekly Done</p>
             </div>
             <div className="rounded-lg bg-muted p-4 text-center">
-              <p className="font-serif text-2xl font-semibold">{monthly.filter((c) => submissions.has(c.id)).length}</p>
+              <ProgressRing value={monthly.filter((c) => submissions.has(c.id)).length * 10} size={32} thickness={6} color="gold" />
+              <p className="mt-2 font-serif text-xl font-semibold">{monthly.filter((c) => submissions.has(c.id)).length}</p>
               <p className="text-sm text-muted-foreground">Monthly Done</p>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
+            <p>Total XP from challenges this period: <span className="font-medium">{challengeXpEarned}</span></p>
           </div>
         </CardContent>
       </Card>
 
+      {/* Recent Challenge Activity */}
+      {userProgress.length > 0 && (
+        <Card className="border-[rgb(var(--primary))/0.4] bg-[rgb(var(--primary)/0.05)]">
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Recent Challenge Activity</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+            {userProgress.map((sub) => {
+              const challenge = daily.find((c) => c.id === sub.challengeId) ||
+                               weekly.find((c) => c.id === sub.challengeId) ||
+                               monthly.find((c) => c.id === sub.challengeId);
+              if (!challenge) return null;
+              const statusBadge = sub.status === "APPROVED" ? "✓ Approved" : sub.status === "REJECTED" ? "✗ Rejected" : "⏳ Submitted";
+              return (
+                <div key={sub.challengeId} className="p-3 rounded-lg border animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <span className={w-3 h-3 rounded-full flex-shrink-0 aria-hidden="true"} />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{challenge.title}</p>
+                      <p className="text-xs text-muted-foreground">{statusBadge}</p>
+                      {sub.gradedAt && <p className="text-xs text-primary">Graduated {new Date(sub.gradedAt).toLocaleDateString()}</p>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent XP Logs */}
+      {recentXpLogs.length > 0 && (
+        <Card className="border-[rgb(var(--primary))/0.4] bg-[rgb(var(--primary)/0.05)]">
+          <CardHeader>
+            <CardTitle className="font-serif text-lg">Recent XP Gains</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+            {recentXpLogs.map((log) => (
+              <div key={log.id} className="p-3 rounded-lg border animate-fade-in flex items-center justify-between">
+                <span className="font-medium text-sm">{log.reason}</span>
+                <span className="text-primary font-medium">{log.amount} XP</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Leaderboard teaser */}
-      <Card className="border-[rgb(var(--primary)/0.4)] bg-[rgb(var(--primary)/0.05)]">
+      <Card className="border-[rgb(var(--primary))/0.4] bg-[rgb(var(--primary)/0.05)]">
         <CardContent className="pt-5">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
