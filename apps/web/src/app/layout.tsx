@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "A learning platform that blends school-subject tuition with an AI & innovation track — live classes, integrated content, and daily challenges.",
+    "Tuiton — The world's leading tuition platform blending school subjects with AI & innovation. Live classes, integrated content, daily challenges, badges, certificates, and a portfolio that proves what you can build.",
   applicationName: APP_NAME,
   manifest: "/manifest.json",
   appleWebApp: {

@@ -7,11 +7,18 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } fro
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, trending }: { label: string; value: string; trending?: boolean }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <p className="font-serif text-2xl font-semibold leading-none">{value}</p>
-      <p className="mt-1.5 text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+    <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 {trending ? "bg-primary-100 text-primary-600" : "bg-secondary-100 text-secondary-600"}">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path className="font-serif text-2xl font-semibold leading-none">{value}</path>
+        </svg>
+      </div>
+      <div className="flex-1">
+        <p className="font-serif text-2xl font-semibold leading-none">{value}</p>
+        <p className="mt-0.5 text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      </div>
     </div>
   );
 }
@@ -25,13 +32,24 @@ function BadgePill({ label, variant }: { label: string; variant?: "primary" | "s
   );
 }
 
+function TrendingBadge({ label, count }: { label: string; count: number }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-primary-100 text-primary-600 px-2 py-0.5 text-xs font-medium">
+      {label} <span className="ml-1 text-xs font-bold">{count}+</span>
+    </span>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
 
-  const [user, totalUsers] = await Promise.all([
-    prisma.user.findUnique({ where: { id: session.sub }, include: { profile: true } }),
+  const [user, totalUsers, totalChallenges, completedChallenges, courseProgress] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.sub }, include: { profile: true, aiInteractions: true } }),
     prisma.user.count(),
+    prisma.challenge.count(),
+    prisma.challengeSubmission.count({ where: { status: "APPROVED" } }),
+    prisma.certificate.count({ where: { userId: session.sub, completedAt: { not: null } } }),
   ]);
 
   const isAdmin = session.role === "ADMIN";
@@ -81,6 +99,9 @@ export default async function DashboardPage() {
     },
   ];
 
+  // Recent AI interactions
+  const recentAiInteractions = user?.aiInteractions?.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())?.slice(0, 3) || [];
+
   return (
     <div className="space-y-8">
       <header>
@@ -90,7 +111,123 @@ export default async function DashboardPage() {
         </h1>
         <p className="mt-2 max-w-xl text-muted-foreground">
           {isAdmin
-            ? "Operate the platform from here — host classes, author content, set challenges."
+            ? "Operate the platform from here â€” host classes, author content, set challenges."
+            : "Your space for lessons, live classes and challenges. Everything below is built to completion, not to a demo."}
+        </p>
+      </header>
+
+      {/* Daily Alerts Section */}
+      {isAdmin ? null : (
+        <section className="rounded-xl border border-border bg-card p-6 mb-8">
+          <h2 className="font-serif text-xl font-semibold mb-4">Today's Alerts</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Check out what's waiting for you today. Stay consistent and earn rewards!
+          </p>
+          <div className="space-y-3">
+            {dailyAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={p-4 rounded-lg border animate-fade-in}
+              >
+                <div className="flex items-start gap-3">
+                  <span className={w-3 h-3 rounded-full flex-shrink-0 aria-hidden="true"} />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-lg">{alert.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{alert.description}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    asChild
+                    href={alert.action}
+                  >
+                    <span className="font-medium">{alert.actionLabel}</span>
+                  </Button>
+                  <BadgePill label={alert.urgency === "high" ? "URGENT" : "Reminder"} variant={alert.urgency === "high" ? "secondary" : "primary"} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Stats Section */}
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stat label="XP" value={String(profile?.xp ?? 0)} trending={profile?.xp > 1000} />
+        <Stat label="Level" value={String(profile?.level ?? 1)} trending={profile?.level > 5} />
+        <Stat label="Day streak" value={String(profile?.streak ?? 0)} trending={profile?.streak >= 7} />
+        <Stat label="Certifications" value={String(courseProgress)} trending={courseProgress > 0} />
+        <Stat label="Total Users" value={String(totalUsers)} />
+        <Stat label="Challenges" value={String(totalChallenges)} />
+        <Stat label="Completed" value={String(completedChallenges)} />
+        <Stat label="AI Sessions" value={String(user?.aiInteractions?.length || 0)} />
+      </section>
+
+      {/* Featured Content Section */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-serif text-xl font-semibold">Choose what to work on</h2>
+          <p className="mt-1 text-sm text-muted-foreground">School learning and practical technology skills, in one place.</p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PILLARS.map((pillar) => (
+            <Card key={pillar.id}>
+              <CardHeader>
+                <CardTitle className="font-serif text-lg">{pillar.label}</CardTitle>
+                <CardDescription>{pillar.tagline}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link href="/roadmaps">Explore learning paths</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Recent Activity Section */}
+      {isAdmin ? null : (
+        <section className="rounded-xl border border-border bg-card p-6">
+          <h2 className="font-serif text-xl font-semibold mb-4">Recent Activity</h2>
+          <p className="text-sm text-muted-foreground mb-4">What you've been up to lately</p>
+          <div className="space-y-3 max-h-80 overflow-y-auto">
+            {recentAiInteractions.map((interaction) => (
+              <div key={interaction.id} className="p-3 rounded-lg border animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <span className={w-3 h-3 rounded-full flex-shrink-0 aria-hidden="true"} />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{interaction.kind}</p>
+                    <p className="text-xs text-muted-foreground">{interaction.prompt?.substring(0, 50) || "No prompt"}...</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {recentAiInteractions.length === 0 && (
+              <p className="text-xs text-muted-foreground">No recent AI interactions yet. Start a session to get started!</p>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+    },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <header>
+        <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+        <h1 className="mt-1 font-serif text-3xl font-semibold tracking-tight">
+          {isAdmin ? "Console" : "Welcome back"}, {user?.name?.split(" ")[0]}.
+        </h1>
+        <p className="mt-2 max-w-xl text-muted-foreground">
+          {isAdmin
+            ? "Operate the platform from here ï¿½ host classes, author content, set challenges."
             : "Your space for lessons, live classes and challenges. Everything below is built to completion, not to a demo."}
         </p>
       </header>
@@ -137,7 +274,7 @@ export default async function DashboardPage() {
         <Stat label="XP" value={String(profile?.xp ?? 0)} />
         <Stat label="Level" value={String(profile?.level ?? 1)} />
         <Stat label="Day streak" value={String(profile?.streak ?? 0)} />
-        <Stat label="Campus" value={user?.role === "ADMIN" ? "Admin" : (profile?.grade || "—") || "—"} />
+        <Stat label="Campus" value={user?.role === "ADMIN" ? "Admin" : (profile?.grade || "ï¿½") || "ï¿½"} />
       </section>
 
       <section className="space-y-4">
