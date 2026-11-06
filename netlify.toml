@@ -1,0 +1,6 @@
+[build]
+  command = "npm run netlify-build"
+  publish = "apps/web/.next"
+
+[context]
+  framework = "nextjs"
