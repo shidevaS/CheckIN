@@ -1,5 +1,3 @@
 {
-  "buildCommand": "npm run build --workspace apps/web",
-  "devCommand": "npm run dev --workspace apps/web",
-  "framework": "nextjs",
+  "framework": "nextjs"
 }
