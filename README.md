@@ -55,7 +55,7 @@ cp packages/db/.env.example packages/db/.env
 # For SQLite: DATABASE_URL="file:./dev.db"
 
 # Seed the database
-npm run db:push
+npm run db:push 
 npm run db:seed
 
 # Start development server
