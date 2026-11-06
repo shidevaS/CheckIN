@@ -5,6 +5,8 @@ const nextConfig = {
   experimental: { serverActions: { bodySizeLimit: "2mb" } },
   swcMinify: false,
   jsxRuntime: "automatic",
+  jsxImportSource: "@tuiton/shared",
+  jsxRuntime: "automatic",
   jsxImportSource: "@tuiton/shared"
 };
 module.exports = nextConfig;
