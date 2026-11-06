@@ -20,7 +20,8 @@
     "moduleResolution": "Bundler",
     "incremental": true,
     "noEmit": true,
-    "allowJs": true
+    "allowJs": true,
+    "jsx": "preserve"
   },
   "include": [
     "next-env.d.ts",

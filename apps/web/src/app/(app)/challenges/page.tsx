@@ -125,9 +125,25 @@ export default async function ChallengesPage() {
   ]);
 
   const submissions = new Map(submissionsData.map((s) => [s.challengeId, s]));
-  const challengeXpEarned = daily.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0) +
-                            weekly.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0) +
-                            monthly.reduce((sum, c) => sum + (submissions.has(c.id) ? (submissions.get(c.id)?.xpAwarded || c.xp : 0) : 0), 0);
+
+    const getXp = (challenges) => {
+      let sum = 0;
+      for (const c of challenges) {
+        const sub = submissions.get(c.id);
+        if (sub && sub.xpAwarded) {
+          sum += sub.xpAwarded;
+        } else {
+          sum += c.xp || 0;
+        }
+      }
+      return sum;
+    };
+
+    const dailyXp = getXp(daily);
+    const weeklyXp = getXp(weekly);
+    const monthlyXp = getXp(monthly);
+
+    const challengeXpEarned = dailyXp + weeklyXp + monthlyXp;
 
   return (
     <div className="space-y-10">
@@ -207,7 +223,7 @@ export default async function ChallengesPage() {
               return (
                 <div key={sub.challengeId} className="p-3 rounded-lg border animate-fade-in">
                   <div className="flex items-start gap-3">
-                    <span className={w-3 h-3 rounded-full flex-shrink-0 aria-hidden="true"} />
+                    <span className="w-3 h-3 rounded-full flex-shrink-0" aria-hidden="true" />
                     <div className="flex-1">
                       <p className="font-medium text-sm">{challenge.title}</p>
                       <p className="text-xs text-muted-foreground">{statusBadge}</p>

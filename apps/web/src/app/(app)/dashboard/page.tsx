@@ -26,7 +26,7 @@ function Stat({ label, value, trending }: { label: string; value: string; trendi
 function BadgePill({ label, variant }: { label: string; variant?: "primary" | "secondary" }) {
   const v = variant || "primary";
   return (
-    <span className={inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium }>
+    <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium">
       {label}
     </span>
   );
