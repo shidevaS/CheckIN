@@ -12,7 +12,7 @@
     "strict": true,
     "noImplicitOverride": true,
     "skipLibCheck": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "jsxImportSource": "@tuiton/shared"
   }
 }
