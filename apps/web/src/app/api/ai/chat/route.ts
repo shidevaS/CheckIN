@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       courseEnrollments: {
         include: { course: true },
       },
-      roadmapEnrollments: {
+        enrollments: {
         include: { roadmap: true },
       },
       aiInteractions: {
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   });
 
   const recentTopics = user?.aiInteractions?.map((ai) => ai.topic).filter(Boolean) || [];
-  const enrolledRoadmaps = user?.roadmapEnrollments?.map((enroll) => enroll.roadmap) || [];
+    const enrolledRoadmaps = user?.enrollments?.map((enroll) => enroll.roadmap) || [];
   const enrolledCourses = user?.courseEnrollments?.map((enroll) => enroll.course) || [];
 
   // Build a context string for the AI about the user's learning journey
