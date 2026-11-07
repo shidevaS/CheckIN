@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@tuiton/shared", "@tuiton/db"],
   experimental: { serverActions: { bodySizeLimit: "2mb" } },
-  swcMinify: false
+  swcMinify: false,
+  jsxRuntime: "automatic",
+  jsxImportSource: "@tuiton/shared"
 };
 module.exports = nextConfig;

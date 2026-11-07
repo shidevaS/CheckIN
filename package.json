@@ -18,12 +18,18 @@
     "db:seed": "npm run db:seed --workspace @tuiton/db",
     "db:studio": "npm run db:studio --workspace @tuiton/db",
     "mobile:start": "npm start --workspace apps/mobile",
-    "vercel-build": "npm install && npm run build --workspace apps/web"
+    "vercel-build": "npm install && npm run build --workspace apps/web",
+    "netlify-build": "npm run build --workspace apps/web"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
     "playwright": "^1.62.1"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~4.0.1",
+    "react-dom": "18.3.1",
+    "react-native-web": "~0.19.13"
   }
 }
